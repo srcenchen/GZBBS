@@ -10,6 +10,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -28,6 +29,7 @@ import com.sanenchen.gzbbs.R
 import com.sanenchen.gzbbs.beans.LoginSignBean
 import com.sanenchen.gzbbs.ui.theme.GZBBSTheme
 import com.sanenchen.gzbbs.utils.APIConnection.Companion.loginSign
+import com.sanenchen.gzbbs.utils.SharedPreferencesUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -122,9 +124,9 @@ class LoginActivity : ComponentActivity() {
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                     maxLines = 1,
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next, keyboardType = KeyboardType.NumberPassword),
-                    visualTransformation = PasswordVisualTransformation()
-                )
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done, keyboardType = KeyboardType.NumberPassword),
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardActions = KeyboardActions(onDone = { login(user, password, coroutineScope) }))
                 Row {
                     OutlinedButton(onClick = { login.value = false }, modifier = Modifier.padding(top = 16.dp, end = 8.dp)) {
                         Text("算啦")
@@ -154,6 +156,9 @@ class LoginActivity : ComponentActivity() {
             launch(Dispatchers.Main) {
                 if (isSigned) {
                     Toast.makeText(this@LoginActivity, "登录成功", Toast.LENGTH_SHORT).show()
+                    // 缓存密码
+                    SharedPreferencesUtils.saveData(this@LoginActivity, "username", user)
+                    SharedPreferencesUtils.saveData(this@LoginActivity, "password", password)
                     startActivity(Intent(this@LoginActivity, MainActivity::class.java).putExtra("username", user))
                     finish()
                 } else
@@ -162,6 +167,18 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
-
+    /**
+     * 自动登录
+     */
+    override fun onResume() {
+        super.onResume()
+        val user = SharedPreferencesUtils.getData(this, "username")
+        val password = SharedPreferencesUtils.getData(this, "password")
+        if (user != "" && password != "") {
+            // 启动
+            startActivity(Intent(this, MainActivity::class.java).putExtra("username", user))
+            finish()
+        }
+    }
 }
 

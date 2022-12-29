@@ -40,5 +40,18 @@ class APIConnection {
             // 解析JSON
             return Gson().fromJson(responseData, UserInfoBean::class.java)[0]
         }
+
+        /**
+         * 修改昵称和密码
+         */
+        fun updateInfo(userName: String, nickName: String, password: String): Boolean {
+            val client = OkHttpClient()
+            val request = Request.Builder().url("$APIUrl/updateInfo/?username=$userName&nickname=$nickName&password=$password").build()
+            val response = client.newCall(request).execute()
+            val responseData = response.body?.string()
+            // 解析JSON
+            val loginSignBean = Gson().fromJson(responseData, LoginSignBean::class.java)
+            return loginSignBean.code == 1
+        }
     }
 }

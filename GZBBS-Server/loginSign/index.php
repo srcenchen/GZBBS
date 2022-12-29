@@ -28,7 +28,7 @@ while($row = $result->fetch_assoc()) {
 if (count($arr) == 0) {
     $arr = array(
         'code' => 0,
-        'msg' => '用户名或码错误'
+        'msg' => '用户名或密码错误'
     );
 } else {
     $arr = array(
