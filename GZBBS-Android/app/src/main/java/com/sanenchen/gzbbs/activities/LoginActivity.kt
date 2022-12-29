@@ -1,13 +1,13 @@
-package com.sanenchen.gzbbs
+package com.sanenchen.gzbbs.activities
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -20,13 +20,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.airbnb.lottie.compose.*
+import com.sanenchen.gzbbs.R
+import com.sanenchen.gzbbs.beans.LoginSignBean
 import com.sanenchen.gzbbs.ui.theme.GZBBSTheme
+import com.sanenchen.gzbbs.utils.APIConnection.Companion.loginSign
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * @author sanenchen
@@ -71,8 +76,8 @@ class LoginActivity : ComponentActivity() {
             )
             Text("欢迎👏🏻", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.padding(top = 8.dp))
-            Text(text = "我们欢迎每一位同学的加入", modifier = Modifier.padding(top = 8.dp))
-            Text("但在此之前", modifier = Modifier.padding(top = 8.dp))
+            Text(text = "我们欢迎每一位同学的加入。", modifier = Modifier.padding(top = 8.dp))
+            Text("但在此之前，", modifier = Modifier.padding(top = 8.dp))
             Text("让我们先确认下身份吧！", modifier = Modifier.padding(top = 8.dp))
             Button(onClick = { login.value = true }, modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)) {
                 Text("GO GO GO")
@@ -83,7 +88,7 @@ class LoginActivity : ComponentActivity() {
     /**
      * 登录界面
      */
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
     @Composable
     fun Login() {
         Scaffold(
@@ -100,6 +105,7 @@ class LoginActivity : ComponentActivity() {
             ) {
                 var user by remember { mutableStateOf("") }
                 var password by remember { mutableStateOf("") }
+                val coroutineScope = rememberCoroutineScope()
                 TextField(
                     value = user,
                     onValueChange = { user = it },
@@ -123,7 +129,10 @@ class LoginActivity : ComponentActivity() {
                     OutlinedButton(onClick = { login.value = false }, modifier = Modifier.padding(top = 16.dp, end = 8.dp)) {
                         Text("算啦")
                     }
-                    Button(onClick = { login.value = false }, modifier = Modifier.padding(top = 16.dp)) {
+                    Button(
+                        onClick = { login(user, password, coroutineScope) },
+                        modifier = Modifier.padding(top = 16.dp)
+                    ) {
                         Text("登录")
                     }
                 }
@@ -135,5 +144,24 @@ class LoginActivity : ComponentActivity() {
             }
         }
     }
+
+    /**
+     * 登录
+     */
+    fun login(user: String, password: String, coroutineScope: CoroutineScope) {
+        coroutineScope.launch(Dispatchers.IO) {
+            val isSigned = loginSign(user, password)
+            launch(Dispatchers.Main) {
+                if (isSigned) {
+                    Toast.makeText(this@LoginActivity, "登录成功", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@LoginActivity, MainActivity::class.java).putExtra("username", user))
+                    finish()
+                } else
+                    Toast.makeText(this@LoginActivity, "登录失败", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
 }
 
